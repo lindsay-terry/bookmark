@@ -15,9 +15,16 @@ const resolvers = {
     Mutation: {
         // Create user
         createUser: async (parent, { username, email, password }) => {
-            const user = await User.create({ username, email, password });
-            const token = signToken(user);
-            return { token, user };
+            try {
+                const user = await User.create({ username, email, password });
+
+                const token = signToken(user);
+
+                return { token, user };
+            } catch (error) {
+                console.error('Error creating user', error);
+                throw new Error('Failed to create a user.');
+            };
         },
         // Login
         login: async (parent, { email, password }) => {
