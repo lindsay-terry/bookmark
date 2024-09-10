@@ -8,7 +8,20 @@ const resolvers = {
                 const userData = await User.findOne({ _id: context.user._id }).populate('book');
                 return userData;
             }
-        }
+        },
+        searchBooks: async (parent, { query }) => {
+            const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}`);
+            const data = await response.json();
+            return data.items.map(item => ({
+                authors: item.volumeInfo.authors || [],
+                bookId: item.id,
+                image: item.volumeInfo.imageLinks ? item.volumeInfo.imageLinks.thumbnail : '',
+                link: item.volumeInfo.title,
+                title: item.volumeInfo.title,
+                description: item.volumeInfo.description || '',
+                
+            }));
+        },
     },
 
     Mutation: {
