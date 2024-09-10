@@ -3,13 +3,12 @@ const { signToken } = require('../utils/auth');
 
 const resolvers = {
     Query: {
-        getSingleUser: async(parent, { username }) => {
-            const user = await User.findOne({
-                $or: [{ _id }, { username }]
-            });
-            if (!user) throw new Error('User not found');
-            return user;
-        },
+        me: async(parent, args, context) => {
+            if (context.user) {
+                const userData = await User.findOne({ _id: context.user._id }).populate('book');
+                return userData;
+            }
+        }
     },
 
     Mutation: {
@@ -37,7 +36,7 @@ const resolvers = {
             const correctPassword = await user.isCorrectPassword(password);
 
             if (!correctPassword) {
-                throw new Error('Incorrect username or apssword.');
+                throw new Error('Incorrect username or password.');
             }
 
             const token = signToken(user);
@@ -45,31 +44,27 @@ const resolvers = {
             return { token, user };
         },
         // Save Book
-        saveBook: async (parent, { title }, context) => {
-            const user = context.user;
-            if (!user) throw new Error('Please sign in to save books.');
-
-            const updatedUser = await User.findOneAndUpdate(
-                { _id: context.user._id },
-                { $addToSet: { savedBooks: book._id } },
-                { new: true }
-            );
-
-            return updatedUser;
+        saveBook: async (parent, { title, bookId }, context) => {
+            // Check logged in
+            if (context.user) {
+                const book = { title, bookId };
+                const updatedUser = await User.findByIdAndUpdate(
+                    context.user._id,
+                    { $push: { savedBooks: book } },
+                    { new: true }
+                ).populate('savedBooks');
+                return updatedUser;
+            }
         },
         // Delete Book
         deleteBook: async (parent, { bookId }, context) => {
             if (context.user) {
-                const book = await Book.findOneAndDelete({
-                    _id: bookId,
-                    user: context.user.username,
-                });
-
-                await User.findOneAndUpdate(
-                    {_id: context.user._id },
-                    { $pull: { savedBooks: book._id } }
-                );
-                return user;
+                const updatedUser = await User.findByIdAndUpdate(
+                    context.user._id,
+                    { $pull: { savedBooks: { bookId } } },
+                    { new: true }
+                ).populate('savedBooks');
+                return updatedUser;
             }
         },
     },

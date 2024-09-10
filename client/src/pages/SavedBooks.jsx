@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Container,
   Card,
@@ -7,88 +7,82 @@ import {
   Col
 } from 'react-bootstrap';
 
-import { getMe, deleteBook } from '../utils/API';
+import { useQuery, useMutation } from '@apollo/client';
+import { GET_ME } from '../utils/queries';
+import { DELETE_BOOK } from '../utils/mutations';
+
 import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
 
 const SavedBooks = () => {
   const [userData, setUserData] = useState({});
 
-  // use this to determine if `useEffect()` hook needs to run again
-  const userDataLength = Object.keys(userData).length;
+  if (!userData || !userData.savedBooks) {
+    return <p>No saved books available.</p>;
+  }
 
-  useEffect(() => {
-    const getUserData = async () => {
-      try {
-        const token = Auth.loggedIn() ? Auth.getToken() : null;
+  const isLoggedIn = Auth.loggedIn();
 
-        if (!token) {
-          return false;
-        }
+  const {loading, error } = useQuery(GET_ME, {
+    onCompleted: (data) => {
+      setUserData(data.me);
+    },
+    skip: !isLoggedIn,
+  });
 
-        const response = await getMe(token);
+  // if (!Auth.loggedIn()) {
+  //   return <h2>Plase log in to view saved books.</h2>;
+  // }
 
-        if (!response.ok) {
-          throw new Error('something went wrong!');
-        }
+  // Query to get userData/saved books
+  // const { loading, error, data } = useQuery(GET_ME, {
+  //   onCompleted: (data) => setUserData(data.me),
+  // });
 
-        const user = await response.json();
-        setUserData(user);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    getUserData();
-  }, [userDataLength]);
+  // Delete a book
+  const [deleteBook] = useMutation(DELETE_BOOK, {
+    onCompleted: (data) => {
+      setUserData(data.deleteBook);
+      removeBookId(data.deleteBook.savedBooks.map(book => book.bookId));
+    },
+    onError: (error) => console.error('Error deleting book:', error),
+  });
 
   // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
-    const token = Auth.loggedIn() ? Auth.getToken() : null;
-
-    if (!token) {
-      return false;
-    }
-
     try {
-      const response = await deleteBook(bookId, token);
-
-      if (!response.ok) {
-        throw new Error('something went wrong!');
-      }
-
-      const updatedUser = await response.json();
-      setUserData(updatedUser);
-      // upon success, remove book's id from localStorage
-      removeBookId(bookId);
-    } catch (err) {
-      console.error(err);
+      await deleteBook({ variables: { bookId }});
+    } catch (error) {
+      console.error(error);
     }
+
   };
 
-  // if data isn't here yet, say so
-  if (!userDataLength) {
-    return <h2>LOADING...</h2>;
+  // Handle data loading and errors
+  if (!isLoggedIn) {
+    return <h2>Please log in to view saved books.</h2>;
   }
+  if (loading) return <h2>Loading...</h2>;
+  if (error) return <h2>Error fetching saved books {error.message}</h2>
 
   return (
     <>
-      <div fluid className="text-light bg-dark p-5">
+      <div className="text-light bg-dark p-5">
         <Container>
           <h1>Viewing saved books!</h1>
         </Container>
       </div>
       <Container>
         <h2 className='pt-5'>
-          {userData.savedBooks.length
+          {userData.savedBooks && userData.savedBooks.length
             ? `Viewing ${userData.savedBooks.length} saved ${userData.savedBooks.length === 1 ? 'book' : 'books'}:`
             : 'You have no saved books!'}
         </h2>
         <Row>
-          {userData.savedBooks.map((book) => {
+          {userData.savedBooks && userData.savedBooks.map((book) => {
             return (
-              <Col md="4">
-                <Card key={book.bookId} border='dark'>
+              <Col key={book.bookId} md="4">
+                <Card  border='dark'>
                   {book.image ? <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' /> : null}
                   <Card.Body>
                     <Card.Title>{book.title}</Card.Title>
@@ -109,3 +103,4 @@ const SavedBooks = () => {
 };
 
 export default SavedBooks;
+

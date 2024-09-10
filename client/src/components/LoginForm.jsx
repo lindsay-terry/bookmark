@@ -14,7 +14,7 @@ const LoginForm = () => {
   const [showAlert, setShowAlert] = useState(false);
 
   // initialize useMutation
-  const [login, { error, data }] = useMutation(LOGIN_USER);
+  const [login, { error }] = useMutation(LOGIN_USER);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -36,14 +36,19 @@ const LoginForm = () => {
         variables: { ...userFormData },
       });
 
-      Auth.login(data.login.token);
+      if (data && data.login) {
+        Auth.login(data.login.token);
+      } else {
+        throw new Error ('No data found');
+      }
+
     } catch (err) {
-      console.error(err); 
+      console.error('Login error:', err); 
       setShowAlert(true);
     }
-
+    //Clear form after use
     setUserFormData({
-      // username: '',
+      username: '',
       email: '',
       password: '',
     });

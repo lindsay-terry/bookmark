@@ -14,6 +14,7 @@ const typeDefs = `
         image: String
         link: String
         title: String!
+        description: String
     }
 
     type Auth {
@@ -22,14 +23,14 @@ const typeDefs = `
     }
 
     type Query {
-        getSingleUser(_id: ID, username: String): User
+        me: User
     }
 
     type Mutation {
         createUser(username: String!, email: String!, password: String!): Auth
         login(email: String!, password: String!): Auth
-        saveBook(title: String!, _id: ID!): User
-        deleteBook(_id: ID!): User
+        saveBook(title: String!, bookId: String!): User
+        deleteBook(bookId: String!): User
     }
 `;
 
