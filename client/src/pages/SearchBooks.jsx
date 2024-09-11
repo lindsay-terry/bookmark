@@ -19,6 +19,11 @@ const SearchBooks = () => {
   // create state to hold saved bookId values
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
 
+  // Set up save_book mutation
+  const [saveBook, { error }] = useMutation(SAVE_BOOK);
+
+
+
   // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
   useEffect(() => {
@@ -35,7 +40,6 @@ const SearchBooks = () => {
 
     try { // Pass searchInput state variable into fetch request
       const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${searchInput}`);
-      console.log(response);
       if (!response.ok) {
         throw new Error('Error fetching book data');
       }
@@ -64,10 +68,11 @@ const SearchBooks = () => {
 
   // create function to handle saving a book to our database
   const handleSaveBook = async (bookId) => {
-    // find the book in `searchedBooks` state by the matching id
+    // // find the book in `searchedBooks` state by the matching id
     const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
-
-    // get token
+    console.log(bookToSave.bookId);
+    if (!bookToSave) return;
+    // // get token
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
     if (!token) {
@@ -75,17 +80,34 @@ const SearchBooks = () => {
     }
 
     try {
-      const response = await saveBook(bookToSave, token);
+      const { data } = await saveBook({
+        variables: { book: { ...bookToSave } },
+      });
+      console.log(savedBookIds);
 
-      if (!response.ok) {
-        throw new Error('something went wrong!');
-      }
+      console.log(bookId);
 
-      // if book successfully saves to user's account, save book id to state
       setSavedBookIds([...savedBookIds, bookToSave.bookId]);
-    } catch (err) {
-      console.error(err);
+
+      
+    } catch (error) {
+      console.error(error);
     }
+
+
+
+    // try {
+    //   const response = await saveBook(bookToSave, token);
+
+    //   if (!response.ok) {
+    //     throw new Error('something went wrong!');
+    //   }
+
+    //   // if book successfully saves to user's account, save book id to state
+    //   setSavedBookIds([...savedBookIds, bookToSave.bookId]);
+    // } catch (err) {
+    //   console.error(err);
+    // }
   };
 
   return (

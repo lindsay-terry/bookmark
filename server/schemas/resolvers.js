@@ -9,19 +9,6 @@ const resolvers = {
                 return userData;
             }
         },
-        // searchBooks: async (parent, { query }) => {
-        //     const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}`);
-        //     const data = await response.json();
-        //     return data.items.map(item => ({
-        //         authors: item.volumeInfo.authors || [],
-        //         bookId: item.id,
-        //         image: item.volumeInfo.imageLinks ? item.volumeInfo.imageLinks.thumbnail : '',
-        //         link: item.volumeInfo.title,
-        //         title: item.volumeInfo.title,
-        //         description: item.volumeInfo.description || '',
-                
-        //     }));
-        // },
     },
 
     Mutation: {
@@ -57,17 +44,18 @@ const resolvers = {
             return { token, user };
         },
         // Save Book
-        saveBook: async (parent, { title, bookId }, context) => {
+        saveBook: async (parent, { book }, context) => {
             // Check logged in
             if (context.user) {
-                const book = { title, bookId };
+
                 const updatedUser = await User.findByIdAndUpdate(
-                    context.user._id,
+                    { _id: context.user._id },
                     { $push: { savedBooks: book } },
                     { new: true }
                 ).populate('savedBooks');
                 return updatedUser;
             }
+            throw new Error('Please log in to save books.');
         },
         // Delete Book
         deleteBook: async (parent, { bookId }, context) => {
