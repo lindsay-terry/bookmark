@@ -19,15 +19,15 @@ export const GET_ME = gql`
     }
 `;
 
-export const SEARCH_BOOKS = gql`
-    query searchBooks($query: String!) {
-        searchBooks(query: $query) {
-            authors
-            bookId
-            image
-            link
-            title
-            description
-        }   
-    }  
-`
+// export const SEARCH_BOOKS = gql`
+//     query searchBooks($query: String!) {
+//         searchBooks(query: $query) {
+//             authors
+//             bookId
+//             image
+//             link
+//             title
+//             description
+//         }   
+//     }  
+// `

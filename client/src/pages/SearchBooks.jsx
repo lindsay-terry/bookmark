@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Container, Col, Form, Button, Card, Row } from 'react-bootstrap';
 
 // Import query and mutation hooks from apolloClient and the query and mutation
-import { useQuery, useMutation } from '@apollo/client';
-import { SEARCH_BOOKS } from '../utils/queries';
+import { useMutation } from '@apollo/client';
 import { SAVE_BOOK } from '../utils/mutations';
 
 import Auth from '../utils/auth';
@@ -13,6 +12,7 @@ import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 const SearchBooks = () => {
   // create state for holding returned google api data
   const [searchedBooks, setSearchedBooks] = useState([]);
+
   // create state for holding our search field data
   const [searchInput, setSearchInput] = useState('');
 
@@ -25,11 +25,6 @@ const SearchBooks = () => {
     return () => saveBookIds(savedBookIds);
   });
 
-  const { data } = useQuery(SEARCH_BOOKS, {
-    variables: { query: searchInput },
-  })
-
-
   // create method to search for books and set state on form submit
   const handleFormSubmit = async (event) => {
     event.preventDefault();
@@ -38,33 +33,32 @@ const SearchBooks = () => {
       return false;
     }
 
-    try {
-      console.log(data.searchBooks);
-      setSearchedBooks(data.searchBooks);
-      console.log(searchedBooks);
-      // const response = data?.searchInput || [];
-      // console.log(response);
+    try { // Pass searchInput state variable into fetch request
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${searchInput}`);
+      console.log(response);
+      if (!response.ok) {
+        throw new Error('Error fetching book data');
+      }
 
-      // if (!response) {
-      //   throw new Error('something went wrong!');
-      // }
+      const data = await response.json();
+      // Map out items from response
+      const bookData =  data.items.map(item => ({
+          authors: item.volumeInfo.authors || [],
+          bookId: item.id,
+          image: item.volumeInfo.imageLinks ? item.volumeInfo.imageLinks.thumbnail : '',
+          link: item.volumeInfo.title,
+          title: item.volumeInfo.title,
+          description: item.volumeInfo.description || '',
+                
+      }));
+    
+      // Set mapped out data to state variable 
+    setSearchedBooks(bookData);
+    // Clear input field
+    setSearchInput('');
 
-      // const { items } = await response.json();
-      // const { items } = searchedBooks;
-      // console.log(items);
-
-      // const bookData = items.map((book) => ({
-      //   bookId: book.id,
-      //   authors: book.volumeInfo.authors || ['No author to display'],
-      //   title: book.volumeInfo.title,
-      //   description: book.volumeInfo.description,
-      //   image: book.volumeInfo.imageLinks?.thumbnail || '',
-      // }));
-
-      // setSearchedBooks(bookData);
-      setSearchInput('');
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     }
   };
 
