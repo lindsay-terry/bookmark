@@ -1,5 +1,5 @@
-const { User, Book } = require('../models');
-const { signToken } = require('../utils/auth');
+const { User } = require('../models');
+const { signToken, AuthenticationError } = require('../utils/auth');
 
 const resolvers = {
     Query: {
@@ -8,6 +8,7 @@ const resolvers = {
                 const userData = await User.findOne({ _id: context.user._id }).populate('book');
                 return userData;
             }
+            throw AuthenticationError;
         },
     },
 
@@ -20,6 +21,7 @@ const resolvers = {
                 const token = signToken(user);
 
                 return { token, user };
+
             } catch (error) {
                 console.error('Error creating user', error);
                 throw new Error('Failed to create a user.');
@@ -30,13 +32,13 @@ const resolvers = {
             const user = await User.findOne({ email });
 
             if (!user) {
-                throw new Error('Incorrect username or password.');
+                throw AuthenticationError;
             }
 
             const correctPassword = await user.isCorrectPassword(password);
 
             if (!correctPassword) {
-                throw new Error('Incorrect username or password.');
+                throw AuthenticationError;
             }
 
             const token = signToken(user);
@@ -47,26 +49,27 @@ const resolvers = {
         saveBook: async (parent, { book }, context) => {
             // Check logged in
             if (context.user) {
-
+                
                 const updatedUser = await User.findByIdAndUpdate(
                     { _id: context.user._id },
-                    { $push: { savedBooks: book } },
+                    { $addToSet: { savedBooks: book } },
                     { new: true }
                 ).populate('savedBooks');
                 return updatedUser;
             }
-            throw new Error('Please log in to save books.');
+            throw AuthenticationError;
         },
         // Delete Book
         deleteBook: async (parent, { bookId }, context) => {
             if (context.user) {
                 const updatedUser = await User.findByIdAndUpdate(
-                    context.user._id,
+                    { _id: context.user._id },
                     { $pull: { savedBooks: { bookId } } },
                     { new: true }
                 ).populate('savedBooks');
                 return updatedUser;
             }
+            throw AuthenticationError;
         },
     },
 };

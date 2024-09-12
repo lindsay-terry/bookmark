@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Container,
   Card,
@@ -15,55 +14,33 @@ import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
 
 const SavedBooks = () => {
-  const [userData, setUserData] = useState({});
+  const { data, loading, refetch } = useQuery(GET_ME);
+  let userData = data?.me || {};
 
-  if (!userData || !userData.savedBooks) {
-    return <p>No saved books available.</p>;
-  }
+  const [deleteBook] = useMutation(DELETE_BOOK);
 
-  const isLoggedIn = Auth.loggedIn();
-
-  const {loading, error } = useQuery(GET_ME, {
-    onCompleted: (data) => {
-      setUserData(data.me);
-    },
-    skip: !isLoggedIn,
-  });
-
-  // if (!Auth.loggedIn()) {
-  //   return <h2>Plase log in to view saved books.</h2>;
-  // }
-
-  // Query to get userData/saved books
-  // const { loading, error, data } = useQuery(GET_ME, {
-  //   onCompleted: (data) => setUserData(data.me),
-  // });
-
-  // Delete a book
-  const [deleteBook] = useMutation(DELETE_BOOK, {
-    onCompleted: (data) => {
-      setUserData(data.deleteBook);
-      removeBookId(data.deleteBook.savedBooks.map(book => book.bookId));
-    },
-    onError: (error) => console.error('Error deleting book:', error),
-  });
-
-  // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
+    const token = Auth.loggedIn() ? Auth.getToken() : null;
+
+    if (!token) {
+      return false;
+    }
     try {
-      await deleteBook({ variables: { bookId }});
+      await deleteBook({
+        variables: { bookId: bookId }
+      })
+      const { data } = await refetch();
+      userData = data.me;
+      removeBookId(bookId);
     } catch (error) {
       console.error(error);
     }
 
-  };
-
-  // Handle data loading and errors
-  if (!isLoggedIn) {
-    return <h2>Please log in to view saved books.</h2>;
-  }
-  if (loading) return <h2>Loading...</h2>;
-  if (error) return <h2>Error fetching saved books {error.message}</h2>
+    if (loading) {
+      return <h2>LOADING...</h2>;
+    }
+  
+}
 
   return (
     <>

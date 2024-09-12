@@ -9,6 +9,14 @@ export const CREATE_USER = gql`
                 _id
                 username
                 email
+                savedBooks {
+                    authors
+                    bookId
+                    image
+                    link
+                    title
+                    description
+                }
             }
         }     
     }
@@ -34,6 +42,7 @@ export const SAVE_BOOK = gql`
         saveBook(book: $book) {
             _id
             username
+            email
             savedBooks {
                 title
                 authors
@@ -52,8 +61,8 @@ export const DELETE_BOOK = gql`
         deleteBook(bookId: $bookId) {
             _id
             username
+            email
             savedBooks {
-                _id
                 title
                 authors
                 description

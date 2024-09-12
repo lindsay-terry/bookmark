@@ -70,19 +70,19 @@ const SearchBooks = () => {
   const handleSaveBook = async (bookId) => {
     // // find the book in `searchedBooks` state by the matching id
     const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
-    console.log(bookToSave.bookId);
     if (!bookToSave) return;
     // // get token
+    // const token = Auth.loggedIn() ? Auth.getToken() : null;
     const token = Auth.loggedIn() ? Auth.getToken() : null;
+    console.log(token);
 
-    if (!token) {
-      return false;
-    }
-
+    if (!token) return false;
+    
     try {
       const { data } = await saveBook({
         variables: { book: { ...bookToSave } },
       });
+      console.log(data);
       console.log(savedBookIds);
 
       console.log(bookId);
