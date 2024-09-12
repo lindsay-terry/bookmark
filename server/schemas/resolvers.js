@@ -1,5 +1,5 @@
 const { User } = require('../models');
-const { signToken, AuthenticationError } = require('../utils/auth');
+const { signToken } = require('../utils/auth');
 
 const resolvers = {
     Query: {
@@ -8,7 +8,7 @@ const resolvers = {
                 const userData = await User.findOne({ _id: context.user._id }).populate('book');
                 return userData;
             }
-            throw AuthenticationError;
+            throw new Error(' Unable to find user data.');
         },
     },
 
@@ -16,6 +16,9 @@ const resolvers = {
         // Create user
         createUser: async (parent, { username, email, password }) => {
             try {
+                if (!username || !email || !password) {
+                    throw new Error('Missing required fields.');
+                }
                 const user = await User.create({ username, email, password });
 
                 const token = signToken(user);
@@ -32,13 +35,13 @@ const resolvers = {
             const user = await User.findOne({ email });
 
             if (!user) {
-                throw AuthenticationError;
+                throw new Error('Incorrect email or password.')
             }
 
             const correctPassword = await user.isCorrectPassword(password);
 
             if (!correctPassword) {
-                throw AuthenticationError;
+                throw new Error('Incorrect email or password.');
             }
 
             const token = signToken(user);
@@ -47,17 +50,22 @@ const resolvers = {
         },
         // Save Book
         saveBook: async (parent, { book }, context) => {
+            console.log('LOGGING CONTEXT 1', context);
+            console.log('LOGGING CONTEXT.USER 1', context.user);
+            
             // Check logged in
             if (context.user) {
-                
+                console.log('LOGGING CONTEXT', context);
+                console.log('LOGGING CONTEXT.USER', context.user);
                 const updatedUser = await User.findByIdAndUpdate(
                     { _id: context.user._id },
                     { $addToSet: { savedBooks: book } },
                     { new: true }
                 ).populate('savedBooks');
+                console.log('UPDATED USER: updatedUser')
                 return updatedUser;
             }
-            throw AuthenticationError;
+            throw new Error('Error updating user with saved book information.');
         },
         // Delete Book
         deleteBook: async (parent, { bookId }, context) => {
@@ -69,7 +77,7 @@ const resolvers = {
                 ).populate('savedBooks');
                 return updatedUser;
             }
-            throw AuthenticationError;
+            throw new Error('Error removing book data from user.');
         },
     },
 };

@@ -11,10 +11,15 @@ const db = require('./config/connection');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
+
+
 // Creates a new instance of Apollo Server
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: ({ req }) => ({
+    user: req.user
+  }),
 });
 
 const startApolloServer = async () => {
@@ -22,9 +27,12 @@ const startApolloServer = async () => {
 
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
+  app.use(authMiddleware);
 
   app.use('/graphql', expressMiddleware(server, {
-    context: authMiddleware
+    context: ({ req }) => ({
+      user: req.user
+    }),
   }));
 
 // if we're in production, serve client/build as static assets
