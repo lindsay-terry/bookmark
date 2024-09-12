@@ -1,10 +1,4 @@
-import {
-  Container,
-  Card,
-  Button,
-  Row,
-  Col
-} from 'react-bootstrap';
+import { Container, Card, Button, Row, Col } from 'react-bootstrap';
 
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_ME } from '../utils/queries';
@@ -14,20 +8,23 @@ import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
 
 const SavedBooks = () => {
+  // initialize getme query and delete book mutation
   const { data, loading, refetch } = useQuery(GET_ME);
-  // let userData = data?.me || {};
   const [deleteBook] = useMutation(DELETE_BOOK);
 
   const handleDeleteBook = async (bookId) => {
+    // Verify user is logged in and check token
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
     if (!token) {
       return false;
     }
+    // Pass in book ID to delete book mutation
     try {
       await deleteBook({
         variables: { bookId: bookId }
       })
+      
       await refetch();
     
       removeBookId(bookId);

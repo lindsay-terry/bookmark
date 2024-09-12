@@ -69,6 +69,7 @@ const resolvers = {
         },
         // Delete Book
         deleteBook: async (parent, { bookId }, context) => {
+            console.log('DELETING BOOK TRYING TO', context, bookId)
             if (context.user) {
                 const updatedUser = await User.findByIdAndUpdate(
                     { _id: context.user._id },
