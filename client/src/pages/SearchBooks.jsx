@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Container, Col, Form, Button, Card, Row } from 'react-bootstrap';
-
-// Import query and mutation hooks from apolloClient and the query and mutation
+// Import mutation hook from apolloClient
 import { useMutation } from '@apollo/client';
 import { SAVE_BOOK } from '../utils/mutations';
-
 import Auth from '../utils/auth';
-
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 
 const SearchBooks = () => {
@@ -72,7 +69,7 @@ const SearchBooks = () => {
     const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
     
     if (!bookToSave) return;
-    // // get token
+    // get token
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
     if (!token) return false;

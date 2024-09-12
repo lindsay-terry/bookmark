@@ -3,6 +3,7 @@ const { signToken } = require('../utils/auth');
 
 const resolvers = {
     Query: {
+        // Query logged in user data
         me: async(parent, args, context) => {
             console.log('QUERYING ME', context.user);
             if (context.user) {
