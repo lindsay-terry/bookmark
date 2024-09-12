@@ -7,19 +7,20 @@ const expiration = '2h';
 module.exports = {
   // function for our authenticated routes
   authMiddleware: function (req, res, next) {
-    // console.log('Executing Auth Middleware')
+
     // allows token to be sent via  req.query or headers
     let token = req.query.token || req.headers.authorization;
-    // console.log('Made it past the token part');
     // ["Bearer", "<tokenvalue>"]
     if (req.headers.authorization) {
       token = token.split(' ').pop().trim();
     }
-    // console.log('Made it past req.headers')
+
+    // Allow for login requests to get assigned tokens
     if (!token) {
-      return res.status(400).json({ message: 'You have no token!' });
+     return next();
+    //  return req; 
     }
-    // console.log('There must be a token')
+
     // verify token and get user data out of it
     try {
       const { data } = jwt.verify(token, secret, { maxAge: expiration });

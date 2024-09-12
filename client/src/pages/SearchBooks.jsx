@@ -78,9 +78,9 @@ const SearchBooks = () => {
     if (!token) return false;
     
     try {
+      // eslint-disable-next-line no-unused-vars
       const { data } = await saveBook({ variables: { book: { ...bookToSave } },
       });
-      console.log('Book saved successfully:', data);
       
     } catch (error) {
       console.error('Error saving book', error);

@@ -15,8 +15,7 @@ import { removeBookId } from '../utils/localStorage';
 
 const SavedBooks = () => {
   const { data, loading, refetch } = useQuery(GET_ME);
-  let userData = data?.me || {};
-
+  // let userData = data?.me || {};
   const [deleteBook] = useMutation(DELETE_BOOK);
 
   const handleDeleteBook = async (bookId) => {
@@ -29,8 +28,8 @@ const SavedBooks = () => {
       await deleteBook({
         variables: { bookId: bookId }
       })
-      const { data } = await refetch();
-      userData = data.me;
+      await refetch();
+    
       removeBookId(bookId);
     } catch (error) {
       console.error(error);
@@ -41,6 +40,7 @@ const SavedBooks = () => {
     }
   
 }
+  const userData = data?.me || {};
 
   return (
     <>
